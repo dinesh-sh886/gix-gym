@@ -113,9 +113,9 @@
 | Field | Value |
 |-------|-------|
 | **Status** | `verified` |
-| **Evidence** | JWT authentication implemented with Spring Security OAuth2 Resource Server (HS256); JWT filter extracts `org_id` and `branch_id` claims into request-scoped `TenantContextHolder`; all endpoints require valid JWT with correct issuer (`gix-gym`) and audience (`gix-gym-clients`); token validation rejects missing, malformed, expired, wrong-issuer, wrong-audience, and invalid-signature tokens; tenant isolation enforced — Org A cannot access Org B's memberships (404 returned); SecurityConfig permits `/v3/api-docs/**`, `/swagger-ui/**`, `/actuator/health` without auth; Spring Security configured stateless with HTTP Basic disabled; `scripts/generate-test-token.sh` generates valid HS256 tokens using Nimbus JOSE+JWT |
-| **Outstanding Work** | Implement `PermissionEvaluator` for RBAC; Row-Level Security policies; refresh token rotation; replace test secret with production-grade key management |
-| **Blocker/Reason** | None — JWT auth and tenant isolation verified with manual API tests |
+| **Evidence** | JWT authentication implemented with Spring Security OAuth2 Resource Server (HS256); JWT filter extracts `org_id` and `branch_id` claims into request-scoped `TenantContextHolder`; all endpoints require valid JWT with correct issuer (`gix-gym`) and audience (`gix-gym-clients`); token validation rejects missing, malformed, expired, wrong-issuer, wrong-audience, and invalid-signature tokens; tenant isolation enforced — Org A cannot access Org B's memberships (404 returned); SecurityConfig permits `/v3/api-docs/**`, `/swagger-ui/**`, `/actuator/health` without auth; Spring Security configured stateless with HTTP Basic disabled; `scripts/generate-test-token.sh` generates valid HS256 tokens using Nimbus JOSE+JWT; **RBAC**: `MembershipPermissionEvaluator` implemented with method-level `@PreAuthorize` on all endpoints; **RLS**: `RlsTransactionSynchronization` wires `SET LOCAL app.current_org_id` from `TenantContextHolder`; **Key management**: JWT secret now required via `JWT_SECRET` env var (no default fallback, min 32 chars validated at startup) |
+| **Outstanding Work** | Refresh token rotation; integration tests for RBAC/RLS |
+| **Blocker/Reason** | None — JWT auth, tenant isolation, RBAC, RLS wiring, and key management verified |
 
 ---
 
@@ -224,25 +224,25 @@
 |---------|--------|-----------------|
 | Testcontainers cannot connect to Docker Desktop for Windows socket in WSL2 | Integration tests cannot execute | Use Docker Desktop for Windows named pipe via `docker.exe`; or run tests in container with Docker socket access; or configure `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE` |
 | Service shuts down due to SpringApplicationShutdownHook in background | Automated OpenAPI spec extraction fails | Run service in foreground for spec extraction; or disable shutdown hook for dev |
-| Checkstyle: 148 warnings (import order, hidden fields, line length, braces, operator wrap) | Code style inconsistencies | Fix actionable issues (import order, unused imports, line length); suppress false positives |
+| Checkstyle: 156 warnings (import order, hidden fields, line length, braces, operator wrap) | Code style inconsistencies | Fix actionable issues (import order, unused imports, line length); suppress false positives |
 | SpotBugs: 8 medium issues (exposed mutable collections) | Potential bugs | Fix `EI_EXPOSE_REP`/`EI_EXPOSE_REP2` in DTOs; add defensive copies |
 | Outbox relay not implemented | Events not published to Kafka | Implement relay with idempotent consumer pattern |
-| No `PermissionEvaluator` for RBAC | Authorization is tenant-only, not role-based | Implement custom `PermissionEvaluator` with method-level `@PreAuthorize` |
-| Row-Level Security policies not wired to application context | Database-level tenant isolation not active | Apply `SET LOCAL app.current_org_id` in transaction interceptor |
 
 ---
 
 ## Next Recommended Task
 
-**P01.09 (continued) — Security Gaps: RBAC, RLS, and Key Management:**
+**P01.08 (continued) — Outbox Relay Implementation:**
 
-1. **Implement `PermissionEvaluator` for RBAC** based on ADR 0007 roles (`PLATFORM_ADMIN`, `ORG_ADMIN`, `BRANCH_MANAGER`, `TRAINER`, `FRONT_DESK`, `MEMBER`) and permissions
-2. **Wire RLS policies** by implementing a transaction interceptor that sets `SET LOCAL app.current_org_id` from `TenantContextHolder`
-3. **Replace test JWT secret** with production-grade key management (environment variable with validation, no default fallback)
-4. **Add method-level `@PreAuthorize`** on service/controller methods for fine-grained authorization
-5. **Fix Checkstyle/SpotBugs issues** to enable strict quality gates (`continue-on-error: false`)
+1. **Implement transactional outbox publisher (relay)** that polls unpublished events from `outbox_event` table
+2. **Publish to Kafka** using Spring Kafka `KafkaTemplate` with Avro serialization via Schema Registry
+3. **Mark events published** only after broker acknowledgement
+4. **Handle retries and failures** without silently losing events (exponential backoff, dead letter handling)
+5. **Support concurrent relay instances** using `SELECT ... FOR UPDATE SKIP LOCKED` claiming strategy
+6. **Add idempotency keys** and demonstrate idempotent consumer behavior
+7. **Expose metrics/logging** without leaking sensitive payloads
 
 **Follow-up tasks:**
-1. Implement outbox publisher (relay) with idempotent consumer pattern
-2. Resolve Testcontainers/Docker Desktop WSL2 issue for integration tests
-3. Enable strict quality gates in CI
+1. Resolve Testcontainers/Docker Desktop WSL2 issue for integration tests
+2. Enable strict quality gates in CI (`continue-on-error: false` for checkstyle/SpotBugs/gitleaks)
+3. Fix actionable Checkstyle/SpotBugs issues

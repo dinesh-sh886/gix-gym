@@ -66,6 +66,17 @@
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
+        <!-- Kafka & Avro -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>1.11.3</version>
+        </dependency>
+
         <!-- OpenAPI / SpringDoc -->
         <dependency>
             <groupId>org.springdoc</groupId>
