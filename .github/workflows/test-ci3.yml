@@ -1,0 +1,11 @@
+name: Test CI 3
+on:
+  push:
+    branches: [master]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ hashFiles('infrastructure/docker/compose.yml') != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "hashFiles test"
