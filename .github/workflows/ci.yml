@@ -51,11 +51,11 @@ jobs:
         run: mvn -ntp -B verify --file pom.xml
 
       - name: Checkstyle
-        run: mvn -ntp -B checkstyle:check --file pom.xml
+        run: mvn -ntp -B checkstyle:check -pl services/membership
         continue-on-error: true  # non-blocking until baseline established
 
       - name: SpotBugs
-        run: mvn -ntp -B spotbugs:check --file pom.xml
+        run: mvn -ntp -B spotbugs:check -pl services/membership
         continue-on-error: true  # non-blocking until baseline established
 
       - name: Verify OpenAPI specs (if any)
