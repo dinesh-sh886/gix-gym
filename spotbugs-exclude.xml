@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Gix Gym — SpotBugs Exclude Filter
+  Owner: dinesh-sh886
+  Suppresses known false positives and acceptable patterns
+-->
+<FindBugsFilter>
+  <!-- Suppress DM_DEFAULT_ENCODING in test code (explicit UTF-8 used in prod) -->
+  <Match>
+    <Bug pattern="DM_DEFAULT_ENCODING"/>
+    <Or>
+      <Class name="~.*Test.*"/>
+      <Class name="~.*IT.*"/>
+    </Or>
+  </Match>
+
+  <!-- Suppress EI_EXPOSE_REP for DTO/entity getters returning collections (defensive copy in setters) -->
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP"/>
+    <Or>
+      <Method name="get.*"/>
+      <Method name="set.*"/>
+    </Or>
+  </Match>
+
+  <!-- Suppress EI_EXPOSE_REP2 for builders/constructors (immutable after construction) -->
+  <Match>
+    <Bug pattern="EI_EXPOSE_REP2"/>
+    <Or>
+      <Method name="<init>"/>
+      <Method name="builder"/>
+      <Method name="toBuilder"/>
+    </Or>
+  </Match>
+
+  <!-- Suppress RV_RETURN_VALUE_IGNORED for StringBuilder.append, List.add in fluent APIs -->
+  <Match>
+    <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    <Method name="append|add|put"/>
+  </Match>
+
+  <!-- Suppress NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE for Optional returns (caller handles) -->
+  <Match>
+    <Bug pattern="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE"/>
+    <Or>
+      <Method name="find.*"/>
+      <Method name="getOptional.*"/>
+    </Or>
+  </Match>
+
+  <!-- Suppress SI_INSTANCE_BEFORE_FINALS for Lombok @Builder (generated code) -->
+  <Match>
+    <Bug pattern="SI_INSTANCE_BEFORE_FINALS"/>
+    <Class name="~.*\$.*Builder"/>
+  </Match>
+
+  <!-- Suppress UR_UNREAD_PUBLIC_OR_PROTECTED_FIELD for JPA entity fields (required by Hibernate) -->
+  <Match>
+    <Bug pattern="UR_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
+    <Or>
+      <Annotation name="javax.persistence.*"/>
+      <Annotation name="jakarta.persistence.*"/>
+    </Or>
+  </Match>
+
+  <!-- Suppress V6001 (unused parameter) for interface methods / overridden methods -->
+  <Match>
+    <Bug pattern="V6001"/>
+  </Match>
+
+  <!-- Suppress V6007 (expression always true/false) for defensive null checks -->
+  <Match>
+    <Bug pattern="V6007"/>
+  </Match>
+
+  <!-- Suppress UCF_USELESS_CONTROL_FLOW for generated equals/hashCode -->
+  <Match>
+    <Bug pattern="UCF_USELESS_CONTROL_FLOW"/>
+    <Or>
+      <Method name="equals"/>
+      <Method name="hashCode"/>
+    </Or>
+  </Match>
+
+  <!-- Suppress VA_FORMAT_STRING_ILLEGAL for SLF4J placeholders -->
+  <Match>
+    <Bug pattern="VA_FORMAT_STRING_ILLEGAL"/>
+    <Method name="debug|info|warn|error|trace"/>
+  </Match>
+</FindBugsFilter>

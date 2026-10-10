@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "MembershipCreated",
+  "namespace": "com.gix.gym.membership.events",
+  "doc": "Event published when a membership is created",
+  "fields": [
+    {"name": "eventId", "type": "string", "doc": "Unique event identifier (UUID)"},
+    {"name": "eventType", "type": "string", "doc": "Event type identifier"},
+    {"name": "schemaVersion", "type": "string", "doc": "Event schema version"},
+    {"name": "aggregateType", "type": "string", "doc": "Domain aggregate type"},
+    {"name": "aggregateId", "type": "string", "doc": "Aggregate identifier (membership ID)"},
+    {"name": "organizationId", "type": "string", "doc": "Tenant organization identifier"},
+    {"name": "branchId", "type": "string", "doc": "Branch/location identifier"},
+    {"name": "memberId", "type": "string", "doc": "Member identifier"},
+    {"name": "planName", "type": "string", "doc": "Membership plan name"},
+    {"name": "startDate", "type": "string", "doc": "Membership start date (ISO-8601)"},
+    {"name": "endDate", "type": ["null", "string"], "default": null, "doc": "Membership end date (ISO-8601)"},
+    {"name": "status", "type": "string", "doc": "Membership status"},
+    {"name": "occurredAt", "type": "string", "doc": "Event occurrence timestamp (ISO-8601)"},
+    {"name": "correlationId", "type": ["null", "string"], "default": null, "doc": "Correlation ID for request tracing"},
+    {"name": "causationId", "type": ["null", "string"], "default": null, "doc": "Causation ID for event chaining"}
+  ],
+  "connect.name": "com.gix.gym.membership.events.MembershipCreated"
+}

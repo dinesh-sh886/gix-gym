@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "MembershipCancelled",
+  "namespace": "com.gix.gym.membership.events",
+  "doc": "Event published when a membership is cancelled",
+  "fields": [
+    {"name": "eventId", "type": "string", "doc": "Unique event identifier (UUID)"},
+    {"name": "eventType", "type": "string", "doc": "Event type identifier"},
+    {"name": "schemaVersion", "type": "string", "doc": "Event schema version"},
+    {"name": "aggregateType", "type": "string", "doc": "Domain aggregate type"},
+    {"name": "aggregateId", "type": "string", "doc": "Aggregate identifier (membership ID)"},
+    {"name": "organizationId", "type": "string", "doc": "Tenant organization identifier"},
+    {"name": "cancelledAt", "type": "string", "doc": "Timestamp when membership was cancelled (ISO-8601)"},
+    {"name": "occurredAt", "type": "string", "doc": "Event occurrence timestamp (ISO-8601)"},
+    {"name": "correlationId", "type": ["null", "string"], "default": null, "doc": "Correlation ID for request tracing"},
+    {"name": "causationId", "type": ["null", "string"], "default": null, "doc": "Causation ID for event chaining"}
+  ],
+  "connect.name": "com.gix.gym.membership.events.MembershipCancelled"
+}

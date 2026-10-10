@@ -1,0 +1,7 @@
+/*
+ * Gix Gym
+ * Copyright (C) 2026 dinesh-sh886
+ *
+ * This file is part of the Gix Gym project.
+ * See the LICENSE file for licensing information (pending).
+ */
