@@ -24,6 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,6 +45,7 @@ public class MembershipController {
     }
 
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'membership:create')")
     @Operation(summary = "Create a new membership",
             description = "Creates a new membership for a member within the authenticated organization and branch")
     @ApiResponses(value = {
@@ -75,6 +77,7 @@ public class MembershipController {
     }
 
     @GetMapping("/{membershipId}")
+    @PreAuthorize("hasPermission(null, 'membership:read')")
     @Operation(summary = "Get membership by ID",
             description = "Retrieves a membership by its ID within the authenticated organization")
     @ApiResponses(value = {
@@ -96,6 +99,7 @@ public class MembershipController {
     }
 
     @GetMapping
+    @PreAuthorize("hasPermission(null, 'membership:read')")
     @Operation(summary = "List memberships",
             description = "Lists memberships for the authenticated organization with pagination")
     @ApiResponses(value = {
@@ -124,6 +128,7 @@ public class MembershipController {
     }
 
     @PostMapping("/{membershipId}/freeze")
+    @PreAuthorize("hasPermission(null, 'membership:freeze')")
     @Operation(summary = "Freeze a membership",
             description = "Freezes an active membership")
     @ApiResponses(value = {
@@ -149,6 +154,7 @@ public class MembershipController {
     }
 
     @PostMapping("/{membershipId}/cancel")
+    @PreAuthorize("hasPermission(null, 'membership:cancel')")
     @Operation(summary = "Cancel a membership",
             description = "Cancels an active or frozen membership")
     @ApiResponses(value = {

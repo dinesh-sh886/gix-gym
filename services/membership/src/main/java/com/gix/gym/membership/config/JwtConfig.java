@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 public class JwtConfig {
 
-    @Value("${JWT_SECRET:changeme-generate-a-secure-random-secret-at-least-256-bits}")
+    @Value("${JWT_SECRET}")
     private String jwtSecret;
 
     @Value("${JWT_ISSUER:gix-gym}")
@@ -30,6 +30,13 @@ public class JwtConfig {
 
     @Bean
     public JwtDecoder jwtDecoder() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET must be configured and cannot be empty");
+        }
+        if (jwtSecret.length() < 32) {
+            throw new IllegalStateException("JWT_SECRET must be at least 32 characters (256 bits for HS256)");
+        }
+
         SecretKeySpec secretKey = new SecretKeySpec(
                 jwtSecret.getBytes(StandardCharsets.UTF_8),
                 "HmacSHA256"

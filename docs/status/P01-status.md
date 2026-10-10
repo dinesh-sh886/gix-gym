@@ -2,7 +2,7 @@
 
 **Project:** Gix Gym  
 **Owner:** dinesh-sh886  
-**Last Updated:** 2026-10-10  
+**Last Updated:** 2026-10-10 (commit febdcb7)  
 **Phase:** P01 — Local Development Foundation
 
 ---
@@ -123,10 +123,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | `in progress` |
-| **Evidence** | `.github/workflows/ci.yml` created with: JDK 21 setup, Maven cache, enforcer, verify, checkstyle, SpotBugs, OpenAPI validation placeholder, gitleaks secret scan; membership service passes `mvn verify` locally with checkstyle (138 warnings, non-blocking) and SpotBugs (8 medium issues, non-blocking); all unit tests pass (34/34) |
-| **Outstanding Work** | Run workflow on GitHub (push to remote); fix any failures; enable strict gates (`continue-on-error: false`); fix actionable checkstyle/SpotBugs issues |
-| **Blocker/Reason** | Repository not yet pushed to GitHub; workflow untested |
+| **Status** | `verified` |
+| **Evidence** | `.github/workflows/ci.yml` passes on GitHub (run 38080754500): JDK 21 setup, Maven cache, enforcer, verify, checkstyle (148 warnings, non-blocking), SpotBugs (8 medium issues, non-blocking), gitleaks (no leaks found); all unit tests pass (34/34); workflow triggers on push to master/main/develop and PR; Docker Compose config validates |
+| **Outstanding Work** | Enable strict gates (`continue-on-error: false` for checkstyle/SpotBugs/gitleaks); fix actionable checkstyle/SpotBugs issues |
+| **Blocker/Reason** | None — CI verified on GitHub |
 
 ---
 
@@ -165,7 +165,7 @@
 | P01.07 OpenAPI Baseline | ✅ verified |
 | P01.08 Kafka Contracts | ✅ verified |
 | P01.09 Auth & Tenant Isolation | ✅ **verified** |
-| P01.10 CI Quality Gates | 🔄 in progress (untested) |
+| P01.10 CI Quality Gates | ✅ **verified** |
 | P01.11 AWS Deferred | ✅ verified |
 | P01.12 Test Evidence | ✅ verified |
 
@@ -182,7 +182,7 @@
 | `mvn -ntp -B -pl services/membership flyway:migrate` | 0 | ✅ PASS (Flyway 11.10.0 + PostgreSQL plugin) |
 | `mvn -ntp -B -pl services/membership -am verify` | 0 | ✅ PASS |
 | `mvn -ntp -B -pl services/membership test` | 0 | ✅ PASS (34/34 unit tests) |
-| `curl http://localhost:8082/v3/api-docs | python3 -m json.tool` | 0 | ✅ PASS (valid JSON) |
+| `curl http://localhost:8082/v3/api-docs \| python3 -m json.tool` | 0 | ✅ PASS (valid JSON) |
 | `curl -X POST ... membership-created.avsc to Schema Registry` | 0 | ✅ PASS (IDs 1,2,3) |
 | `curl -X POST ... v2 doc change` | 0 | ✅ PASS (backward compatible) |
 | `curl -H "Authorization: Bearer $TOKEN" http://localhost:8082/api/v1/memberships` | 0 | ✅ PASS (JWT auth works) |
@@ -192,6 +192,7 @@
 | `curl -H "Authorization: Bearer $TOKEN_B" ...` | 0 | ✅ PASS (tenant isolation: Org B sees empty list) |
 | `curl -H "Authorization: Bearer $TOKEN_B" .../membershipId` | 0 | ✅ PASS (tenant isolation: 404 for cross-org access) |
 | `git diff --check` | 0 | ✅ PASS |
+| GitHub Actions CI (run 38080754500) | 0 | ✅ PASS (Build & Verify, Docker Compose, Status Summary) |
 
 ---
 
@@ -210,10 +211,10 @@
 
 | Tool | Violations | Status |
 |------|------------|--------|
-| Checkstyle | 138 warnings | Non-blocking (configured `failOnViolation=false`) |
+| Checkstyle | 148 warnings | Non-blocking (configured `failOnViolation=false`) |
 | SpotBugs | 8 medium issues | Non-blocking (configured `failOnError=false`) |
 | JaCoCo | Not measured | Requires test execution |
-| Gitleaks | Not run locally | CI only |
+| Gitleaks | 0 leaks found | CI verified (run 38080754500) |
 
 ---
 
@@ -223,28 +224,25 @@
 |---------|--------|-----------------|
 | Testcontainers cannot connect to Docker Desktop for Windows socket in WSL2 | Integration tests cannot execute | Use Docker Desktop for Windows named pipe via `docker.exe`; or run tests in container with Docker socket access; or configure `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE` |
 | Service shuts down due to SpringApplicationShutdownHook in background | Automated OpenAPI spec extraction fails | Run service in foreground for spec extraction; or disable shutdown hook for dev |
-| Checkstyle: 138 warnings (import order, hidden fields, line length, braces, operator wrap) | Code style inconsistencies | Fix actionable issues (import order, unused imports, line length); suppress false positives |
-| SpotBugs: 8 medium issues (exposed mutable collections, format string newlines) | Potential bugs | Fix `EI_EXPOSE_REP`/`EI_EXPOSE_REP2` in DTOs; fix `VA_FORMAT_STRING_USES_NEWLINE` in payload builders |
+| Checkstyle: 148 warnings (import order, hidden fields, line length, braces, operator wrap) | Code style inconsistencies | Fix actionable issues (import order, unused imports, line length); suppress false positives |
+| SpotBugs: 8 medium issues (exposed mutable collections) | Potential bugs | Fix `EI_EXPOSE_REP`/`EI_EXPOSE_REP2` in DTOs; add defensive copies |
 | Outbox relay not implemented | Events not published to Kafka | Implement relay with idempotent consumer pattern |
 | No `PermissionEvaluator` for RBAC | Authorization is tenant-only, not role-based | Implement custom `PermissionEvaluator` with method-level `@PreAuthorize` |
-| No Row-Level Security policies enforced | Database-level tenant isolation not active | Apply Flyway migration V2 (RLS policies) and configure `SET LOCAL app.current_org_id` |
+| Row-Level Security policies not wired to application context | Database-level tenant isolation not active | Apply `SET LOCAL app.current_org_id` in transaction interceptor |
 
 ---
 
 ## Next Recommended Task
 
-**P01.10 — Push to GitHub and validate CI workflow:**
+**P01.09 (continued) — Security Gaps: RBAC, RLS, and Key Management:**
 
-1. **Push to GitHub**: `git push -u origin main` (after adding remote)
-2. **Validate CI workflow**: Ensure GitHub Actions runs `mvn verify` successfully
-3. **Fix actionable Checkstyle/SpotBugs issues** where practical
-4. **Configure branch protection** with required status checks
-
-**Prerequisite:** Create GitHub repository `dinesh-sh886/gix-gym` and add remote.
+1. **Implement `PermissionEvaluator` for RBAC** based on ADR 0007 roles (`PLATFORM_ADMIN`, `ORG_ADMIN`, `BRANCH_MANAGER`, `TRAINER`, `FRONT_DESK`, `MEMBER`) and permissions
+2. **Wire RLS policies** by implementing a transaction interceptor that sets `SET LOCAL app.current_org_id` from `TenantContextHolder`
+3. **Replace test JWT secret** with production-grade key management (environment variable with validation, no default fallback)
+4. **Add method-level `@PreAuthorize`** on service/controller methods for fine-grained authorization
+5. **Fix Checkstyle/SpotBugs issues** to enable strict quality gates (`continue-on-error: false`)
 
 **Follow-up tasks:**
 1. Implement outbox publisher (relay) with idempotent consumer pattern
 2. Resolve Testcontainers/Docker Desktop WSL2 issue for integration tests
-3. Implement `PermissionEvaluator` for RBAC authorization
-4. Apply Flyway migration V2 (RLS policies) and configure `SET LOCAL app.current_org_id`
-5. Configure production-grade key management (replace test JWT secret)
+3. Enable strict quality gates in CI

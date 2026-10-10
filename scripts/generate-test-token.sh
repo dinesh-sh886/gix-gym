@@ -3,6 +3,7 @@
 # Owner: dinesh-sh886
 # Usage: ./scripts/generate-test-token.sh [org_id] [branch_id] [roles...] [subject]
 # Requires: Java (for proper JWT signing with Nimbus JOSE+JWT)
+# Environment: JWT_SECRET (required, min 32 chars), JWT_ISSUER, JWT_AUDIENCE
 
 set -euo pipefail
 
@@ -10,20 +11,24 @@ ORG_ID="${1:-00000000-0000-0000-0000-000000000001}"
 BRANCH_ID="${2:-00000000-0000-0000-0000-000000000001}"
 ROLES="${3:-MEMBER}"
 SUBJECT="${4:-test-user}"
-SECRET="${JWT_SECRET:-changeme-generate-a-secure-random-secret-at-least-256-bits}"
+
+# JWT_SECRET is required - no default for security
+SECRET="${JWT_SECRET:-}"
 ISSUER="${JWT_ISSUER:-gix-gym}"
 AUDIENCE="${JWT_AUDIENCE:-gix-gym-clients}"
+
+# Validate secret is provided
+if [[ -z "$SECRET" ]]; then
+    echo "ERROR: JWT_SECRET environment variable is required" >&2
+    echo "Usage: JWT_SECRET=your-secret ./scripts/generate-test-token.sh [org_id] [branch_id] [roles] [subject]" >&2
+    exit 1
+fi
 
 # Validate secret strength
 if [[ ${#SECRET} -lt 32 ]]; then
     echo "ERROR: JWT_SECRET must be at least 32 characters (256 bits for HS256)" >&2
     echo "Current secret length: ${#SECRET}" >&2
     exit 1
-fi
-
-# Check if we're using the default secret (which is insecure)
-if [[ "$SECRET" == "changeme-generate-a-secure-random-secret-at-least-256-bits" ]]; then
-    echo "WARNING: Using default JWT_SECRET. This is insecure for production!" >&2
 fi
 
 # Use Java to generate the token with proper JWT library

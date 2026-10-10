@@ -24,6 +24,12 @@ import java.util.UUID;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private final RlsTransactionSynchronization rlsTransactionSynchronization;
+
+    public JwtAuthenticationFilter(RlsTransactionSynchronization rlsTransactionSynchronization) {
+        this.rlsTransactionSynchronization = rlsTransactionSynchronization;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -48,6 +54,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // Also set in ThreadLocal for service layer access
                     TenantContextHolder.setContext(new TenantContext(organizationId, branchId));
+
+                    // Register RLS context for current transaction
+                    rlsTransactionSynchronization.registerRlsContext();
                 }
             }
         } catch (Exception e) {
