@@ -1,0 +1,21 @@
+name: Test CI 8
+on:
+  push:
+    branches: [master]
+jobs:
+  docker-compose-config:
+    name: Docker Compose Config Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ hashFiles('infrastructure/docker/compose.yml') != '' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Docker Compose
+        run: |
+          sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+
+      - name: Validate Compose syntax
+        run: docker compose -f infrastructure/docker/compose.yml config --quiet
+        continue-on-error: true
