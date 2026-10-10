@@ -48,7 +48,7 @@ jobs:
         run: mvn -ntp -B enforcer:enforce@enforce-java --file pom.xml
 
       - name: Compile and Test
-        run: mvn -ntp -B verify --file pom.xml
+        run: mvn -ntp -B verify -pl services/membership -am --file pom.xml
 
       - name: Checkstyle
         run: mvn -ntp -B checkstyle:check -pl services/membership
