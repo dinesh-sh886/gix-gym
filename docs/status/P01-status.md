@@ -102,9 +102,9 @@
 | Field | Value |
 |-------|-------|
 | **Status** | `verified` |
-| **Evidence** | Three Avro schemas created in `contracts/kafka-events/`: `membership-created.avsc`, `membership-frozen.avsc`, `membership-cancelled.avsc`; all validated as JSON and registered in Schema Registry (subjects: `membership-created-value`, `membership-frozen-value`, `membership-cancelled-value`); global compatibility set to `BACKWARD`; backward-compatible schema evolution tested (v2 doc change registered successfully); outbox table created by Flyway with event fields; OutboxEvent entity and repository implemented; events published for membership.created, membership.frozen, membership.cancelled |
-| **Outstanding Work** | Implement outbox publisher (relay); test producer/consumer round-trip |
-| **Blocker/Reason** | Relay implementation pending |
+| **Evidence** | Three Avro schemas created in `contracts/kafka-events/`: `membership-created.avsc`, `membership-frozen.avsc`, `membership-cancelled.avsc`; all validated as JSON and registered in Schema Registry (subjects: `membership-created-value`, `membership-frozen-value`, `membership-cancelled-value`); global compatibility set to `BACKWARD`; backward-compatible schema evolution tested (v2 doc change registered successfully); outbox table created by Flyway with event fields; OutboxEvent entity and repository implemented; events published for membership.created, membership.frozen, membership.cancelled; **Outbox relay implemented**: `OutboxEventPublisher` polls unpublished events, serializes to Avro via Schema Registry, publishes to Kafka with broker acknowledgement, marks events published atomically, supports retries with exponential backoff |
+| **Outstanding Work** | Test producer/consumer round-trip; add integration tests for relay; implement idempotent consumer pattern |
+| **Blocker/Reason** | Relay implementation complete; integration tests blocked by Testcontainers/Docker issue |
 
 ---
 
@@ -226,23 +226,22 @@
 | Service shuts down due to SpringApplicationShutdownHook in background | Automated OpenAPI spec extraction fails | Run service in foreground for spec extraction; or disable shutdown hook for dev |
 | Checkstyle: 156 warnings (import order, hidden fields, line length, braces, operator wrap) | Code style inconsistencies | Fix actionable issues (import order, unused imports, line length); suppress false positives |
 | SpotBugs: 8 medium issues (exposed mutable collections) | Potential bugs | Fix `EI_EXPOSE_REP`/`EI_EXPOSE_REP2` in DTOs; add defensive copies |
-| Outbox relay not implemented | Events not published to Kafka | Implement relay with idempotent consumer pattern |
 
 ---
 
 ## Next Recommended Task
 
-**P01.08 (continued) — Outbox Relay Implementation:**
+**P01.12 (continued) — Integration Test Execution & Code Quality:**
 
-1. **Implement transactional outbox publisher (relay)** that polls unpublished events from `outbox_event` table
-2. **Publish to Kafka** using Spring Kafka `KafkaTemplate` with Avro serialization via Schema Registry
-3. **Mark events published** only after broker acknowledgement
-4. **Handle retries and failures** without silently losing events (exponential backoff, dead letter handling)
-5. **Support concurrent relay instances** using `SELECT ... FOR UPDATE SKIP LOCKED` claiming strategy
-6. **Add idempotency keys** and demonstrate idempotent consumer behavior
-7. **Expose metrics/logging** without leaking sensitive payloads
+1. **Resolve Testcontainers/Docker Desktop WSL2 issue** for integration tests:
+   - Configure `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock` in WSL2
+   - Or use Docker Desktop for Windows named pipe via `docker.exe`
+   - Or run tests in container with Docker socket access
+2. **Enable strict quality gates** in CI (`continue-on-error: false` for checkstyle/SpotBugs/gitleaks)
+3. **Fix actionable Checkstyle/SpotBugs issues** (156 warnings, 8 medium issues)
+4. **Add integration tests for outbox relay** (producer/consumer round-trip, idempotent consumer)
+5. **Add RBAC/RLS integration tests** to verify authorization and database-level isolation
 
 **Follow-up tasks:**
-1. Resolve Testcontainers/Docker Desktop WSL2 issue for integration tests
-2. Enable strict quality gates in CI (`continue-on-error: false` for checkstyle/SpotBugs/gitleaks)
-3. Fix actionable Checkstyle/SpotBugs issues
+1. Configure branch protection with required status checks
+2. Add contract tests for OpenAPI/Kafka schemas
