@@ -45,7 +45,7 @@ jobs:
         run: mvn -ntp -B validate --file pom.xml
 
       - name: Run Enforcer (Java 21, Maven 3.9+, no duplicate deps)
-        run: mvn -ntp -B enforcer:enforce --file pom.xml
+        run: mvn -ntp -B enforcer:enforce@enforce-java --file pom.xml
 
       - name: Compile and Test
         run: mvn -ntp -B verify --file pom.xml
