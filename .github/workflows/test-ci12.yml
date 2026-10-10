@@ -1,0 +1,14 @@
+name: Test CI 12
+on:
+  push:
+    branches: [master]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "test"
