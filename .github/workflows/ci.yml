@@ -1,4 +1,4 @@
-name: CI — Gix Gym
+name: CI - Gix Gym
 
 on:
   push:
