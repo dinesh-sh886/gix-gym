@@ -2,7 +2,7 @@
 
 **Project:** Gix Gym  
 **Owner:** dinesh-sh886  
-**Last Updated:** 2026-10-10 (commit febdcb7)  
+**Last Updated:** 2026-10-11 (commit 6261c9e)  
 **Phase:** P01 — Local Development Foundation
 
 ---
@@ -145,10 +145,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | `verified` |
-| **Evidence** | Unit tests: 34 tests pass (domain: Membership, MembershipStatus, OutboxEvent); Integration tests written for repository, service, and controller layers (Testcontainers PostgreSQL); tests excluded from Surefire due to Testcontainers/Docker Desktop WSL2 incompatibility; JaCoCo configured (50% line / 40% branch) |
-| **Outstanding Work** | Execute integration tests when Testcontainers/Docker Desktop issue resolved; add contract tests; handover checklist for next phase |
-| **Blocker/Reason** | Testcontainers cannot connect to Docker Desktop for Windows socket in WSL2; known blocker |
+| **Status** | `blocked` |
+| **Evidence** | Unit tests: 34 tests pass (domain: Membership, MembershipStatus, OutboxEvent); Integration tests written for repository, service, controller, and security layers (5 test classes, 32 tests); JaCoCo configured (50% line / 40% branch); **Integration tests cannot execute** due to Docker Desktop/WSL2 compatibility issue |
+| **Outstanding Work** | Execute integration tests; add contract tests; handover checklist for next phase |
+| **Blocker/Reason** | **Confirmed blocker**: Testcontainers (docker-java 3.4.x) fails with `BadRequestException (Status 400)` when calling Docker daemon `/info` endpoint via unix socket on Docker Desktop 4.79.0 (WSL2). `curl` works, but docker-java client receives empty response fields. Docker daemon reports proxy config `http.docker.internal:3128` which interferes with unix socket communication. Workaround: Enable Docker Desktop → Settings → General → "Expose daemon on tcp://localhost:2375 without TLS", then run tests with `DOCKER_HOST=tcp://localhost:2375`. |
 
 ---
 
@@ -167,7 +167,7 @@
 | P01.09 Auth & Tenant Isolation | ✅ **verified** |
 | P01.10 CI Quality Gates | ✅ **verified** |
 | P01.11 AWS Deferred | ✅ verified |
-| P01.12 Test Evidence | ✅ verified |
+| P01.12 Test Evidence | 🚫 **blocked** |
 
 ---
 
@@ -222,7 +222,7 @@
 
 | Blocker | Impact | Resolution Path |
 |---------|--------|-----------------|
-| Testcontainers cannot connect to Docker Desktop for Windows socket in WSL2 | Integration tests cannot execute | Use Docker Desktop for Windows named pipe via `docker.exe`; or run tests in container with Docker socket access; or configure `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE` |
+| Testcontainers/docker-java 400 error on Docker Desktop 4.79.0 WSL2 unix socket | All 32 integration tests blocked | **User action required**: Enable Docker Desktop → Settings → General → "Expose daemon on tcp://localhost:2375 without TLS", restart Docker Desktop, then run tests with `DOCKER_HOST=tcp://localhost:2375 mvn test` |
 | Service shuts down due to SpringApplicationShutdownHook in background | Automated OpenAPI spec extraction fails | Run service in foreground for spec extraction; or disable shutdown hook for dev |
 | Checkstyle: 156 warnings (import order, hidden fields, line length, braces, operator wrap) | Code style inconsistencies | Fix actionable issues (import order, unused imports, line length); suppress false positives |
 | SpotBugs: 8 medium issues (exposed mutable collections) | Potential bugs | Fix `EI_EXPOSE_REP`/`EI_EXPOSE_REP2` in DTOs; add defensive copies |
@@ -231,16 +231,24 @@
 
 ## Next Recommended Task
 
-**P01.12 (continued) — Integration Test Execution & Code Quality:**
+**P01.12 — Unblock Integration Tests (requires user action):**
 
-1. **Resolve Testcontainers/Docker Desktop WSL2 issue** for integration tests:
-   - Configure `TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock` in WSL2
-   - Or use Docker Desktop for Windows named pipe via `docker.exe`
-   - Or run tests in container with Docker socket access
-2. **Enable strict quality gates** in CI (`continue-on-error: false` for checkstyle/SpotBugs/gitleaks)
-3. **Fix actionable Checkstyle/SpotBugs issues** (156 warnings, 8 medium issues)
-4. **Add integration tests for outbox relay** (producer/consumer round-trip, idempotent consumer)
-5. **Add RBAC/RLS integration tests** to verify authorization and database-level isolation
+1. **Enable Docker Desktop TCP daemon** (one-time setup):
+   - Open Docker Desktop → Settings → General
+   - Check "Expose daemon on tcp://localhost:2375 without TLS"
+   - Click "Apply & Restart"
+   - Verify: `curl http://localhost:2375/_ping` returns `OK`
+
+2. **Run integration tests**:
+   ```bash
+   DOCKER_HOST=tcp://localhost:2375 mvn -ntp -B -pl services/membership verify
+   ```
+
+3. **Once unblocked**, enable strict quality gates in CI (`continue-on-error: false` for checkstyle/SpotBugs/gitleaks)
+
+4. **Fix actionable Checkstyle/SpotBugs issues** (156 warnings, 8 medium issues)
+
+5. **Add integration tests** for outbox relay (producer/consumer round-trip, idempotent consumer) and RBAC/RLS verification
 
 **Follow-up tasks:**
 1. Configure branch protection with required status checks
